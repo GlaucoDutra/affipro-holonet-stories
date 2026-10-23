@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b0710">
+  <title>Demo checkout | Holonet Stories</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://version-test.affipro.us/api/1.1/wf/pixel_code?id=px_f15feb772c534f3a8ee33e62cb74eae8"></script>
+  <style>
+    .checkout { max-width:720px; margin:8vh auto; padding:clamp(24px,5vw,54px); border:1px solid #56377a; border-radius:24px; background:rgba(20,12,30,.95); box-shadow:0 24px 80px #0008 }
+    .checkout h1 { margin:8px 0 12px; font-size:clamp(32px,6vw,54px); line-height:1.05 }
+    .checkout p { color:#c8b9d9; line-height:1.7 }
+    .checkout-box { margin:26px 0; padding:20px; border:1px solid #56377a; border-radius:16px; background:#100a17 }
+    .checkout-box strong { display:block; font-size:18px; margin-bottom:7px }
+    .checkout-price { font-size:24px; font-weight:700; color:#c69bff }
+    .checkout-status { min-height:24px; margin-top:14px; font-size:14px; color:#c8b9d9 }
+    .checkout-status.error { color:#ff8585 }.checkout-status.success { color:#63d9a4 }
+    .checkout .button { cursor:pointer }.checkout .button:disabled { opacity:.6; cursor:wait }
+    .demo-warning { padding:12px 14px; border-radius:12px; background:#2a1b3b; color:#ddc5ff!important; font-size:13px }
+  </style>
+</head>
+<body>
+  <span class="demo-label">AffiPro Test · Fictional demo · No payment is collected</span>
+  <main class="checkout">
+    <a class="brand" href="/">◉ HOLONET STORIES</a>
+    <p class="eyebrow">Secure demo checkout</p>
+    <h1 id="offerTitle">More stories, closer together.</h1>
+    <p>This mock checkout simulates a confirmed membership subscription and reports its value to the Holonet Stories Test campaign. It does not collect card details or charge money.</p>
+    <section class="checkout-box"><strong id="offerName">Holonet Creator Membership</strong><span class="checkout-price" id="offerPrice">$9.99 USD / month</span></section>
+    <p class="demo-warning" id="attribution">Checking for an AffiPro affiliate click…</p>
+    <button class="button primary" id="completeCheckout" type="button">Start demo membership</button>
+    <p class="checkout-status" id="status" role="status" aria-live="polite"></p>
+    <p><a href="/">← Return to Holonet Stories</a></p>
+  </main>
+  <script>
+    const offers={"creator-membership":{name:"Holonet Creator Membership",price:"$9.99 USD / month"},"creator-stories":{name:"Holonet Creator Stories Pass",price:"$4.99 USD / month"}};
+    const params=new URLSearchParams(location.search),offer=params.get('offer')||'creator-membership',item=offers[offer]||offers['creator-membership'];
+    document.getElementById('offerName').textContent=item.name;document.getElementById('offerPrice').textContent=item.price;
+    document.getElementById('offerTitle').textContent=offer==='creator-stories'?'A pass to stories worth sharing.':'More stories, closer together.';
+    function clickId(){let id=params.get('click_id')||params.get('affipro_click_id')||params.get('cid')||'';if(!id){try{id=localStorage.getItem('affipro_click_id')||''}catch{}}if(!id){const match=document.cookie.match(/(?:^|; )affipro_click_id=([^;]*)/);if(match)try{id=decodeURIComponent(match[1])}catch{}}return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)?id:''}
+    const id=clickId(),message=document.getElementById('attribution'),button=document.getElementById('completeCheckout'),status=document.getElementById('status');
+    message.textContent=id?'Affiliate click captured. This demo subscription will be attributed to its campaign.':'No affiliate click was found. Open this page from an AffiPro tracking link to record an attributed demo conversion.';
+    const orderKey=`affipro-demo-order:${offer}`;let orderId='';try{orderId=sessionStorage.getItem(orderKey)||'';if(!orderId){orderId=`DEMO-HOLONET-${crypto.randomUUID()}`;sessionStorage.setItem(orderKey,orderId)}}catch{orderId=`DEMO-HOLONET-${crypto.randomUUID()}`}
+    button.addEventListener('click',async()=>{if(!id){status.textContent='No conversion was sent. Start from an AffiPro affiliate link first.';status.className='checkout-status error';return}button.disabled=true;status.textContent='Recording this demo subscription with AffiPro…';status.className='checkout-status';try{const response=await fetch('/api/mock-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({click_id:id,offer,merchant_order_id:orderId})});const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'The demo subscription could not be recorded.');status.textContent='Demo subscription confirmed and attributed to AffiPro. No payment was collected.';status.className='checkout-status success'}catch(error){status.textContent=error.message||'Unable to record the demo subscription.';status.className='checkout-status error';button.disabled=false}});
+  </script>
+</body>
+</html>
